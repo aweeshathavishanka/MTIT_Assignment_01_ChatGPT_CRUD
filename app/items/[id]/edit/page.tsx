@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import ItemForm from "@/components/ItemForm";
 import { getItemById } from "@/lib/repositories/item.repository";
 import Link from "next/link";
@@ -7,7 +9,24 @@ interface Props {
 }
 
 export default async function EditPage({ params }: Props) {
-  const item = await getItemById(params.id);
+  let item = null;
+  try {
+    item = await getItemById(params.id);
+  } catch (err) {
+    // Log the error and render a friendly message if DB is unreachable.
+    // eslint-disable-next-line no-console
+    console.error("Failed to load item from DB:", err);
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-semibold mb-2">Edit Item</h1>
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+          <p className="text-sm text-red-600">
+            Unable to load item data. Please try again later.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!item) return <div>Not found</div>;
 

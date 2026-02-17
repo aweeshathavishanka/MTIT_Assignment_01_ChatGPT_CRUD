@@ -1,9 +1,21 @@
+export const dynamic = "force-dynamic";
+
 import { getAllItems } from "@/lib/repositories/item.repository";
 import ItemCard from "@/components/ItemCard";
 import Link from "next/link";
 
 export default async function ItemsPage() {
-  const serverItems = await getAllItems();
+  let serverItems = [];
+  try {
+    serverItems = await getAllItems();
+  } catch (err) {
+    // Log the error and fall back to empty list to avoid build/runtime crashes
+    // during environments where the DB is unreachable (build agents, CI).
+    // The page is forced to runtime rendering via `dynamic = 'force-dynamic'`.
+    // eslint-disable-next-line no-console
+    console.error("Failed to load items from DB:", err);
+    serverItems = [];
+  }
 
   const items = serverItems.map((item) => ({
     _id: item._id.toString(),
