@@ -1,40 +1,69 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   getItemById,
   updateItem,
   deleteItem,
 } from "@/lib/repositories/item.repository";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const item = await getItemById(params.id);
-
-  if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  return NextResponse.json(item);
+interface RouteContext {
+  params: Promise<{ id: string }>;
 }
 
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
-  const body = await req.json();
+export async function GET(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
 
-  const success = await updateItem(params.id, body);
+    const item = await getItemById(id);
 
-  if (!success)
-    return NextResponse.json({ error: "Update failed" }, { status: 400 });
+    if (!item) {
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    }
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json(item);
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to fetch item" },
+      { status: 500 },
+    );
+  }
 }
 
-export async function DELETE(
-  _: Request,
-  { params }: { params: { id: string } },
-) {
-  const success = await deleteItem(params.id);
+export async function PUT(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
 
-  if (!success)
-    return NextResponse.json({ error: "Delete failed" }, { status: 400 });
+    const body = await request.json();
 
-  return NextResponse.json({ success: true });
+    const success = await updateItem(id, body);
+
+    if (!success) {
+      return NextResponse.json(
+        { error: "Failed to update item" },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+
+    const success = await deleteItem(id);
+
+    if (!success) {
+      return NextResponse.json(
+        { error: "Failed to delete item" },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+  }
 }
